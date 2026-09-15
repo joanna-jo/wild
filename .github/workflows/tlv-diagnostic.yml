@@ -1,0 +1,29 @@
+name: Diagnose Mach-O TLV imports
+
+on:
+  push:
+    branches: ['debug-tlv']
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-tlv:
+    if: github.repository == 'joanna-jo/wild'
+    runs-on: macos-26
+    timeout-minutes: 10
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install LLVM tools
+        run: |
+          if ! brew install lld llvm > tlv-diagnostic-brew.log 2>&1; then
+            cat tlv-diagnostic-brew.log
+            exit 1
+          fi
+          echo "PATH=/opt/homebrew/opt/llvm/bin:$PATH" >> "$GITHUB_ENV"
+      - name: Build and inspect the TLV reproducer
+        run: bash .github/scripts/inspect-tlv.sh
